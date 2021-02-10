@@ -31,8 +31,14 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        println("Thread name ${Thread.currentThread().name}")
+
+        GlobalScope.launch {
+            println("Thread name1 ${Thread.currentThread().name}")
+        }
+
         lifecycleScope.launch {
-            println("Thread name ${Thread.currentThread().name}")
+            println("Thread name2 ${Thread.currentThread().name}")
         }
 
         lifecycleScope.launch(Dispatchers.Main) {
@@ -50,56 +56,56 @@ class MainActivity : AppCompatActivity() {
             .addCallAdapterFactory(RxJava3CallAdapterFactory.create())
             .build()
         val api = retrofit.create(Api::class.java)
-
-        api.listRepos("rengwuxian")
-            .enqueue(object : Callback<List<Repo>?> {
-                override fun onFailure(call: Call<List<Repo>?>, t: Throwable) {
-                }
-
-                override fun onResponse(call: Call<List<Repo>?>, response: Response<List<Repo>?>) {
-                    textView.text = response.body()?.get(0)?.name
-                }
-            })
+//        api.listRepos("rengwuxian")
+//            .enqueue(object : Callback<List<Repo>?> {
+//                override fun onFailure(call: Call<List<Repo>?>, t: Throwable) {
+//                }
+//
+//                override fun onResponse(call: Call<List<Repo>?>, response: Response<List<Repo>?>) {
+//                    textView.text = response.body()?.get(0)?.name
+//                }
+//            })
 
         lifecycleScope.launch(Dispatchers.Main) {
+            delay(1000)
             val repos = api.listReposKt("iceuncle")
             textView.text = repos[0].name + "Kt"
         }
 
-        api.listReposRx("iceuncle")
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(object : SingleObserver<List<Repo>?> {
-                override fun onSuccess(repos: List<Repo>?) {
-                    textView.text = repos?.get(0)?.name + "Rx"
-                }
+//        api.listReposRx("iceuncle")
+//            .subscribeOn(Schedulers.io())
+//            .observeOn(AndroidSchedulers.mainThread())
+//            .subscribe(object : SingleObserver<List<Repo>?> {
+//                override fun onSuccess(repos: List<Repo>?) {
+//                    textView.text = repos?.get(0)?.name + "Rx"
+//                }
+//
+//                override fun onSubscribe(d: Disposable?) {
+//                    disposable.add(d)
+//                }
+//
+//                override fun onError(e: Throwable?) {
+//                }
+//            })
 
-                override fun onSubscribe(d: Disposable?) {
-                    disposable.add(d)
-                }
-
-                override fun onError(e: Throwable?) {
-                }
-            })
-
-        Single.zip<List<Repo>, List<Repo>, String>(
-            api.listReposRx("rengwuxian"),
-            api.listReposRx("google"),
-            BiFunction { repos1, repos2 -> "${repos1[0].name} - ${repos2[0].name}" }
-        ).observeOn(AndroidSchedulers.mainThread())
-            .subscribe(object : SingleObserver<String> {
-                override fun onSuccess(combined: String) {
-                    textView.text = combined
-                }
-
-                override fun onSubscribe(d: Disposable) {
-
-                }
-
-                override fun onError(e: Throwable) {
-                    textView.text = e.message
-                }
-            })
+//        Single.zip<List<Repo>, List<Repo>, String>(
+//            api.listReposRx("rengwuxian"),
+//            api.listReposRx("google"),
+//            BiFunction { repos1, repos2 -> "${repos1[0].name} - ${repos2[0].name}" }
+//        ).observeOn(AndroidSchedulers.mainThread())
+//            .subscribe(object : SingleObserver<String> {
+//                override fun onSuccess(combined: String) {
+//                    textView.text = combined
+//                }
+//
+//                override fun onSubscribe(d: Disposable) {
+//
+//                }
+//
+//                override fun onError(e: Throwable) {
+//                    textView.text = e.message
+//                }
+//            })
 
         scope.launch(Dispatchers.Main) {
             val rengwuxian = async { api.listReposKt("rengwuxian") }
@@ -111,6 +117,18 @@ class MainActivity : AppCompatActivity() {
         model.repos.observe(this, Observer { repos ->
             textView.text = repos[0].name
         })
+
+//        scope.launch {
+//            coroutineScope {
+//                launch {
+//                    a()
+//                }
+//                launch {
+//                    b()
+//                }
+//            }
+//            c()
+//        }
     }
 
     override fun onDestroy() {
